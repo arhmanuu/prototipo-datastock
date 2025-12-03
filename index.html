@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataStock | IA para Retail</title>
+    <!-- Tailwind CSS para estilizado rápido y profesional -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para gráficos dinámicos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Estilos personalizados para Dark Mode "Data Science" */
+        body {
+            background-color: #0f172a; /* Slate 900 */
+            font-family: 'Inter', sans-serif;
+            color: #e2e8f0;
+        }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, transparent 100%);
+            border-left: 3px solid #38bdf8;
+            color: #38bdf8;
+        }
+
+        .nav-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        /* Transiciones suaves entre vistas */
+        .view-section {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        
+        .view-section.active {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-10">
+        <div class="p-6 flex items-center gap-3">
+            <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/50">
+                <i class="fa-solid fa-chart-line text-white text-sm"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight text-white">DataStock<span class="text-blue-500">.ai</span></h1>
+        </div>
+
+        <nav class="flex-1 px-4 py-4 space-y-2">
+            <a href="#" onclick="switchView('dashboard')" id="nav-dashboard" class="nav-item active flex items-center gap-3 px-4 py-3 text-slate-400 rounded-r-lg transition-colors">
+                <i class="fa-solid fa-gauge-high w-5"></i>
+                <span class="font-medium">Dashboard General</span>
+            </a>
+            <a href="#" onclick="switchView('inventory')" id="nav-inventory" class="nav-item flex items-center gap-3 px-4 py-3 text-slate-400 rounded-r-lg transition-colors">
+                <i class="fa-solid fa-boxes-stacked w-5"></i>
+                <span class="font-medium">Predicción Stock</span>
+                <span class="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">3</span>
+            </a>
+            <a href="#" onclick="switchView('settings')" id="nav-settings" class="nav-item flex items-center gap-3 px-4 py-3 text-slate-400 rounded-r-lg transition-colors">
+                <i class="fa-solid fa-sliders w-5"></i>
+                <span class="font-medium">Configuración Modelo</span>
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
+                    <span class="font-bold text-sm">RC</span>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-white">Roxana Castillo</p>
+                    <p class="text-xs text-slate-500">Project Manager</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col relative overflow-y-auto bg-slate-900">
+        <!-- Header Mobile/Desktop -->
+        <header class="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-900/90 backdrop-blur sticky top-0 z-20">
+            <h2 id="page-title" class="text-lg font-semibold text-white">Visión General</h2>
+            <div class="flex items-center gap-4">
+                <button class="text-slate-400 hover:text-white transition"><i class="fa-regular fa-bell"></i></button>
+                <button class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-md text-sm font-medium transition shadow-lg shadow-blue-600/20">
+                    <i class="fa-solid fa-download mr-2"></i> Reporte PDF
+                </button>
+            </div>
+        </header>
+
+        <div class="p-8 pb-20">
+            
+            <!-- VIEW 1: DASHBOARD -->
+            <div id="dashboard" class="view-section active">
+                <!-- KPIs -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="glass-panel p-5 kpi-card border-l-4 border-blue-500">
+                        <p class="text-sm text-slate-400 mb-1">Precisión del Modelo (MAPE)</p>
+                        <div class="flex items-end gap-2">
+                            <h3 class="text-2xl font-bold text-white">94.2%</h3>
+                            <span class="text-emerald-400 text-xs mb-1"><i class="fa-solid fa-arrow-up"></i> +2.1%</span>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 kpi-card border-l-4 border-emerald-500">
+                        <p class="text-sm text-slate-400 mb-1">Ahorro Proyectado (Mes)</p>
+                        <div class="flex items-end gap-2">
+                            <h3 class="text-2xl font-bold text-white">$ 1.2M CLP</h3>
+                            <span class="text-emerald-400 text-xs mb-1">Capital liberado</span>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 kpi-card border-l-4 border-amber-500">
+                        <p class="text-sm text-slate-400 mb-1">Alertas de Quiebre</p>
+                        <div class="flex items-end gap-2">
+                            <h3 class="text-2xl font-bold text-white">3 SKUs</h3>
+                            <span class="text-red-400 text-xs mb-1">Acción requerida</span>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 kpi-card border-l-4 border-purple-500">
+                        <p class="text-sm text-slate-400 mb-1">Productos Monitoreados</p>
+                        <div class="flex items-end gap-2">
+                            <h3 class="text-2xl font-bold text-white">1,450</h3>
+                            <span class="text-slate-500 text-xs mb-1">Total catálogo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Chart -->
+                <div class="glass-panel p-6 mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-white">Predicción de Demanda vs Real</h3>
+                        <select class="bg-slate-800 border border-slate-700 text-slate-300 text-sm rounded-md p-1">
+                            <option>Últimos 30 días</option>
+                            <option>Últimos 3 meses</option>
+                        </select>
+                    </div>
+                    <div class="h-64 w-full">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: INVENTORY & PREDICTIONS -->
+            <div id="inventory" class="view-section">
+                <div class="glass-panel p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-semibold text-white">Recomendaciones de Compra (IA)</h3>
+                        <div class="flex gap-2">
+                            <input type="text" placeholder="Buscar SKU..." class="bg-slate-800 border border-slate-700 text-white px-3 py-1.5 rounded-md text-sm focus:outline-none focus:border-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="text-slate-400 border-b border-slate-700 text-sm uppercase">
+                                    <th class="p-3 font-medium">Producto</th>
+                                    <th class="p-3 font-medium">Categoría</th>
+                                    <th class="p-3 font-medium text-right">Stock Actual</th>
+                                    <th class="p-3 font-medium text-right">Predicción (7 días)</th>
+                                    <th class="p-3 font-medium text-center">Recomendación</th>
+                                    <th class="p-3 font-medium text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm">
+                                <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
+                                    <td class="p-3 font-medium text-white flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-xs">IMG</div>
+                                        Arroz Grado 2 (1kg)
+                                    </td>
+                                    <td class="p-3 text-slate-400">Abarrotes</td>
+                                    <td class="p-3 text-right text-red-400 font-bold">12 u.</td>
+                                    <td class="p-3 text-right text-white">85 u.</td>
+                                    <td class="p-3 text-center">
+                                        <span class="bg-red-500/10 text-red-400 px-2 py-1 rounded text-xs border border-red-500/20">Quiebre Inminente</span>
+                                    </td>
+                                    <td class="p-3 text-center">
+                                        <button class="text-blue-400 hover:text-white hover:underline">Reponer</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
+                                    <td class="p-3 font-medium text-white flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-xs">IMG</div>
+                                        Aceite Vegetal (900ml)
+                                    </td>
+                                    <td class="p-3 text-slate-400">Abarrotes</td>
+                                    <td class="p-3 text-right text-emerald-400 font-bold">150 u.</td>
+                                    <td class="p-3 text-right text-white">40 u.</td>
+                                    <td class="p-3 text-center">
+                                        <span class="bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded text-xs border border-emerald-500/20">Sobre-Stock</span>
+                                    </td>
+                                    <td class="p-3 text-center">
+                                        <button class="text-slate-500 hover:text-white cursor-not-allowed">Pausar Compra</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-slate-800 hover:bg-slate-800/50 transition">
+                                    <td class="p-3 font-medium text-white flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-xs">IMG</div>
+                                        Detergente Liq. (3L)
+                                    </td>
+                                    <td class="p-3 text-slate-400">Limpieza</td>
+                                    <td class="p-3 text-right text-amber-400 font-bold">25 u.</td>
+                                    <td class="p-3 text-right text-white">30 u.</td>
+                                    <td class="p-3 text-center">
+                                        <span class="bg-amber-500/10 text-amber-400 px-2 py-1 rounded text-xs border border-amber-500/20">Equilibrado</span>
+                                    </td>
+                                    <td class="p-3 text-center">
+                                        <button class="text-blue-400 hover:text-white hover:underline">Ver Detalle</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: SETTINGS -->
+            <div id="settings" class="view-section">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-panel p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Ajuste de Hiperparámetros</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm text-slate-400 block mb-2">Sensibilidad Estacional</label>
+                                <input type="range" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" min="0" max="100" value="70">
+                                <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                    <span>Baja (Estable)</span>
+                                    <span>Alta (Reactiva)</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-sm text-slate-400 block mb-2">Modelo Principal</label>
+                                <div class="flex gap-2">
+                                    <button class="flex-1 bg-blue-600 text-white py-2 rounded text-sm border border-blue-500">Prophet (Meta)</button>
+                                    <button class="flex-1 bg-slate-800 text-slate-400 py-2 rounded text-sm border border-slate-700 hover:border-slate-500">ARIMA</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-panel p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Estado del Sistema</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                    <span class="text-sm text-slate-300">Conexión API (ERP)</span>
+                                </div>
+                                <span class="text-xs text-emerald-400">Activo (12ms)</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                    <span class="text-sm text-slate-300">Base de Datos (AWS RDS)</span>
+                                </div>
+                                <span class="text-xs text-emerald-400">Saludable</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                                    <span class="text-sm text-slate-300">Entrenamiento Modelo</span>
+                                </div>
+                                <span class="text-xs text-amber-400">En progreso (85%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Configuración de Gráfico
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        
+        // Datos simulados
+        const labels = ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4', 'Sem 5', 'Sem 6'];
+        const dataReal = [120, 135, 125, 145, 160, null];
+        const dataPred = [115, 130, 128, 142, 158, 175];
+
+        // Gradiente para el gráfico
+        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.5)'); // Blue
+        gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Venta Real',
+                        data: dataReal,
+                        borderColor: '#10b981', // Emerald
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 4
+                    },
+                    {
+                        label: 'Predicción IA',
+                        data: dataPred,
+                        borderColor: '#38bdf8', // Sky Blue
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#94a3b8' }
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+
+        // Lógica de navegación (SPA feel)
+        function switchView(viewId) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Desactivar nav items
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Mostrar sección seleccionada
+            const selectedView = document.getElementById(viewId);
+            if(selectedView) {
+                selectedView.classList.add('active');
+            }
+
+            // Activar nav item
+            const activeNav = document.getElementById('nav-' + viewId);
+            if(activeNav) {
+                activeNav.classList.add('active');
+            }
+
+            // Actualizar título
+            const titles = {
+                'dashboard': 'Visión General',
+                'inventory': 'Gestión de Stock e IA',
+                'settings': 'Configuración del Sistema'
+            };
+            document.getElementById('page-title').innerText = titles[viewId];
+        }
+    </script>
+</body>
+</html>
